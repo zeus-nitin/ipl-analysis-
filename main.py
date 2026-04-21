@@ -20,6 +20,9 @@ from sklearn.metrics import accuracy_score, classification_report
 import sqlite3, warnings, os, json, threading, webbrowser, time
 import http.server, socketserver, sys
 
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
+
 warnings.filterwarnings("ignore")
 plt.rcParams['figure.facecolor'] = 'white'
 
@@ -1006,37 +1009,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         <div class="card-desc">Which factors matter most in predicting match winners</div>
         <div class="chart-wrap"><canvas id="featureChart"></canvas></div>
       </div>
-      <div class="card">
-        <div class="card-title">🎯 Match Outcome Predictor</div>
-        <div class="card-desc">Enter match details to get an AI prediction</div>
-        <div style="margin-top:.5rem">
-          <div class="predict-grid">
-            <div>
-              <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px">Team 1 Score</label>
-              <input type="number" id="predScore1" value="175" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:.95rem;outline:none">
-            </div>
-            <div>
-              <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px">Team 2 Score</label>
-              <input type="number" id="predScore2" value="160" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:.95rem;outline:none">
-            </div>
-            <div>
-              <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px">Toss Decision</label>
-              <select id="predToss" class="filter-select" style="width:100%">
-                <option value="1">Bat First</option>
-                <option value="0">Field First</option>
-              </select>
-            </div>
-            <div style="display:flex;align-items:flex-end">
-              <button class="predict-btn" onclick="runPredictor()" style="width:100%">Predict Winner 🏆</button>
-            </div>
-          </div>
-          <div class="predict-result" id="predictResult" style="display:none">
-            <div style="font-size:.8rem;color:var(--muted);margin-bottom:.4rem">Predicted Winner</div>
-            <div class="predict-winner" id="predictWinner">—</div>
-            <div class="predict-conf" id="predictConf">—</div>
-          </div>
-        </div>
-      </div>
+
     </div>
   </div>
 

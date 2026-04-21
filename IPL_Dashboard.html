@@ -206,6 +206,23 @@
     border:none;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;
     font-family:var(--font-body);transition:opacity .2s;margin-top:.5rem}
   .predict-btn:hover{opacity:.85}
+  /* ── DEFEND VERDICTS ── */
+  .defend-easy{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.35);color:#34d399}
+  .defend-medium{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.35);color:#fbbf24}
+  .defend-hard{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);color:#f87171}
+  .pred-label{font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px}
+  /* ── VENUE TAGS ── */
+  .venue-tag{display:inline-block;padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600;margin:2px}
+  .vtag-bat{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.35);color:#fbbf24}
+  .vtag-bowl{background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.35);color:#60a5fa}
+  .vtag-spin{background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.35);color:#a78bfa}
+  .vtag-pace{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.35);color:#f87171}
+  /* ── BOWLER TABLE ── */
+  .bowl-badge{padding:3px 8px;border-radius:6px;font-size:.7rem;font-weight:600}
+  .bowl-fast{background:rgba(239,68,68,.15);color:#f87171}
+  .bowl-medium{background:rgba(245,158,11,.15);color:#fbbf24}
+  .bowl-spin{background:rgba(139,92,246,.15);color:#a78bfa}
+  .bowl-allrounder{background:rgba(16,185,129,.15);color:#34d399}
 </style>
 </head>
 <body>
@@ -222,6 +239,7 @@
       <a href="#" onclick="showTab('teams',this)">Teams</a>
       <a href="#" onclick="showTab('analysis',this)">Analysis</a>
       <a href="#" onclick="showTab('ml',this)">ML Model</a>
+      <a href="#" onclick="showTab('bowlers',this)">Bowlers</a>
     </nav>
     <div class="header-status">
       <div class="live-dot"></div>
@@ -463,36 +481,185 @@
         <div class="card-desc">Which factors matter most in predicting match winners</div>
         <div class="chart-wrap"><canvas id="featureChart"></canvas></div>
       </div>
-      <div class="card">
-        <div class="card-title">🎯 Match Outcome Predictor</div>
-        <div class="card-desc">Enter match details to get an AI prediction</div>
-        <div style="margin-top:.5rem">
-          <div class="predict-grid">
+
+    </div>
+
+    <!-- ── VENUE DEFEND-ABILITY PREDICTOR ── -->
+    <div style="margin-top:2rem">
+      <div class="section-title" style="font-size:1.3rem">🏟️ Venue Score Defend-Ability Predictor</div>
+      <div class="section-sub">Select a venue and enter the first innings score to see if it's easy or hard to defend</div>
+      <div class="grid-2">
+        <div class="card" style="border:1px solid rgba(245,158,11,.2)">
+          <div class="card-title">🎯 Predict Defend-Ability</div>
+          <div class="card-desc">Based on historical venue par scores & pitch behaviour</div>
+          <div style="margin-top:1rem;display:grid;gap:1rem">
             <div>
-              <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px">Team 1 Score</label>
-              <input type="number" id="predScore1" value="175" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:.95rem;outline:none">
-            </div>
-            <div>
-              <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px">Team 2 Score</label>
-              <input type="number" id="predScore2" value="160" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:.95rem;outline:none">
-            </div>
-            <div>
-              <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px">Toss Decision</label>
-              <select id="predToss" class="filter-select" style="width:100%">
-                <option value="1">Bat First</option>
-                <option value="0">Field First</option>
+              <label class="pred-label">Select Venue</label>
+              <select id="venueSelect" class="filter-select" style="width:100%;padding:10px 14px;font-size:.95rem" onchange="updateVenueInfo()">
+                <option value="">-- Choose a Venue --</option>
+                <option value="Wankhede Stadium">Wankhede Stadium, Mumbai</option>
+                <option value="MA Chidambaram Stadium">MA Chidambaram Stadium, Chennai</option>
+                <option value="M Chinnaswamy Stadium">M Chinnaswamy Stadium, Bangalore</option>
+                <option value="Eden Gardens">Eden Gardens, Kolkata</option>
+                <option value="Arun Jaitley Stadium">Arun Jaitley Stadium, Delhi</option>
+                <option value="Rajiv Gandhi Stadium">Rajiv Gandhi Intl Stadium, Hyderabad</option>
+                <option value="Sawai Mansingh Stadium">Sawai Mansingh Stadium, Jaipur</option>
+                <option value="Narendra Modi Stadium">Narendra Modi Stadium, Ahmedabad</option>
+                <option value="Punjab Cricket Association Stadium">PCA Stadium, Mohali</option>
+                <option value="Brabourne Stadium">Brabourne Stadium, Mumbai</option>
               </select>
             </div>
-            <div style="display:flex;align-items:flex-end">
-              <button class="predict-btn" onclick="runPredictor()" style="width:100%">Predict Winner 🏆</button>
+            <div>
+              <label class="pred-label">First Innings Score</label>
+              <input type="number" id="venueScore" placeholder="e.g. 185" min="80" max="280"
+                style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-size:.95rem;outline:none;transition:border-color .2s"
+                oninput="liveDefendPredict()">
+            </div>
+            <button class="predict-btn" onclick="runDefendPredictor()" style="width:100%;font-size:1.05rem;padding:12px 0">
+              🏏 Analyse Defend-Ability
+            </button>
+          </div>
+          <!-- Live result preview -->
+          <div id="defendResult" style="display:none;margin-top:1.2rem" class="fade-in">
+            <div id="defendVerdictBox" style="border-radius:14px;padding:1.4rem;text-align:center;margin-bottom:1rem">
+              <div id="defendIcon" style="font-size:2.5rem;margin-bottom:.4rem"></div>
+              <div id="defendVerdict" style="font-family:var(--font-head);font-size:1.7rem;font-weight:700"></div>
+              <div id="defendSub" style="font-size:.88rem;margin-top:.4rem;opacity:.8"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem">
+              <div class="mini-stat"><div class="mini-val" id="dParScore">—</div><div class="mini-lbl">Par Score</div></div>
+              <div class="mini-stat"><div class="mini-val" id="dDiff">—</div><div class="mini-lbl">vs Par</div></div>
+              <div class="mini-stat"><div class="mini-val" id="dDefRate">—</div><div class="mini-lbl">Historical Defend %</div></div>
             </div>
           </div>
-          <div class="predict-result" id="predictResult" style="display:none">
-            <div style="font-size:.8rem;color:var(--muted);margin-bottom:.4rem">Predicted Winner</div>
-            <div class="predict-winner" id="predictWinner">—</div>
-            <div class="predict-conf" id="predictConf">—</div>
+        </div>
+
+        <!-- Venue Info Panel -->
+        <div class="card" id="venueInfoCard" style="border:1px solid rgba(59,130,246,.2)">
+          <div class="card-title">📍 Venue Profile</div>
+          <div class="card-desc" id="venueInfoSub">Select a venue to see its profile</div>
+          <div id="venueInfoBody" style="margin-top:1rem">
+            <div style="text-align:center;padding:2rem;color:var(--muted);font-size:.9rem">
+              ← Select a venue from the predictor
+            </div>
+          </div>
+          <div style="margin-top:1.2rem;display:none" id="venueChartWrap">
+            <div style="font-size:.78rem;font-weight:600;color:var(--muted);margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.06em">Score Distribution</div>
+            <div style="height:160px;position:relative"><canvas id="venueDistChart"></canvas></div>
           </div>
         </div>
+      </div>
+
+      <!-- Venue Comparison Bar -->
+      <div class="card" style="margin-top:1.5rem">
+        <div class="card-title">🏟️ All Venues — Par Score & Defend Rate Comparison</div>
+        <div class="card-desc">Average first-innings score vs historical defence success rate across all IPL venues</div>
+        <div class="chart-wrap tall"><canvas id="venueCompareChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ BOWLER STATS TAB ══════════ -->
+  <div class="tab-section" id="tab-bowlers">
+    <div class="section-title">🎳 Bowler Statistics</div>
+    <div class="section-sub">Comprehensive bowling analysis — wickets, economy, averages and death-over specialists</div>
+
+    <!-- Bowler Search -->
+    <div class="search-box" style="margin-bottom:1.5rem">
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">Search a bowler or click a chip</div>
+      <div class="search-row">
+        <input type="text" id="bowlerSearchInput" placeholder="e.g. Jasprit Bumrah, Pat Cummins, Rashid Khan…" autocomplete="off" onkeydown="if(event.key==='Enter')searchBowler()">
+        <button class="search-btn" onclick="searchBowler()">Search</button>
+      </div>
+      <div class="chips" id="bowlerChips"></div>
+    </div>
+
+    <!-- Bowler Profile -->
+    <div id="bowlerProfile" style="display:none" class="fade-in">
+      <div class="profile-grid">
+        <div class="profile-card">
+          <div class="profile-header">
+            <div class="avatar" id="bAvatar" style="background:linear-gradient(135deg,#ef4444,#f59e0b)">JB</div>
+            <div>
+              <div class="player-name" id="bName">Jasprit Bumrah</div>
+              <div class="player-meta" id="bType">Fast Bowler</div>
+              <span class="team-tag" id="bTeamTag">MI</span>
+            </div>
+          </div>
+          <div class="stat-grid-sm" id="bStatGrid"></div>
+          <div style="margin-top:1.2rem">
+            <div style="font-size:.8rem;color:var(--muted);margin-bottom:8px;font-weight:600">PHASE ECONOMY</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" id="bPhaseGrid"></div>
+          </div>
+        </div>
+        <div class="profile-card">
+          <div class="card-title">Wicket Breakdown by Phase</div>
+          <div class="card-desc">Powerplay · Middle Overs · Death Overs</div>
+          <div style="height:280px;position:relative"><canvas id="bowlerPhaseChart"></canvas></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:2rem">
+        <div class="card-title" id="bSeasonTitle">Season-Wise Wickets</div>
+        <div class="card-desc">Wicket tally across IPL seasons</div>
+        <div class="chart-wrap"><canvas id="bSeasonChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Bowler Leaderboard -->
+    <div style="margin-top:2rem">
+      <div class="section-title" style="font-size:1.2rem">All Bowlers Leaderboard</div>
+      <div class="section-sub">Rankings across wickets, economy, average and dot ball %</div>
+      <div class="filter-row">
+        <select class="filter-select" id="bowlerFilterTeam" onchange="renderBowlerTable()">
+          <option value="">All Teams</option>
+        </select>
+        <select class="filter-select" id="bowlerFilterType" onchange="renderBowlerTable()">
+          <option value="">All Types</option>
+          <option value="fast">Fast</option>
+          <option value="medium">Medium Fast</option>
+          <option value="spin">Spin</option>
+          <option value="allrounder">All-Rounder</option>
+        </select>
+        <select class="filter-select" id="bowlerSortBy" onchange="renderBowlerTable()">
+          <option value="wickets">Sort: Wickets</option>
+          <option value="economy">Sort: Economy</option>
+          <option value="average">Sort: Bowling Avg</option>
+          <option value="dot_pct">Sort: Dot Ball %</option>
+          <option value="sr">Sort: Bowling SR</option>
+        </select>
+      </div>
+      <div class="card" style="overflow-x:auto">
+        <table class="team-table" id="bowlerTable">
+          <thead><tr>
+            <th>#</th><th>Bowler</th><th>Team</th><th>Type</th>
+            <th>Wickets</th><th>Matches</th><th>Economy</th><th>Average</th><th>SR</th><th>Dot %</th><th>Best</th>
+          </tr></thead>
+          <tbody id="bowlerTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Bowler Charts Grid -->
+    <div class="grid-2" style="margin-top:2rem">
+      <div class="card">
+        <div class="card-title">Top Wicket Takers</div>
+        <div class="card-desc">Cumulative wickets — top 20 bowlers (2015–2025)</div>
+        <div class="chart-wrap"><canvas id="topWicketsChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Best Economy Rate</div>
+        <div class="card-desc">Most economical bowlers (min 30 matches)</div>
+        <div class="chart-wrap"><canvas id="economyChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Death Over Specialists</div>
+        <div class="card-desc">Economy in overs 17–20 — lower is better</div>
+        <div class="chart-wrap"><canvas id="deathOverChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Bowling Style Distribution</div>
+        <div class="card-desc">Fast vs Spin vs Medium in the squad</div>
+        <div class="chart-wrap" style="height:260px"><canvas id="bowlStyleChart"></canvas></div>
       </div>
     </div>
   </div>
@@ -554,6 +721,11 @@ function init() {
   buildTossTeamChart();
   buildAnalysisCharts();
   buildFeatureChart();
+  buildVenueCompareChart();
+  buildBowlerChips();
+  buildBowlerTeamFilter();
+  renderBowlerTable();
+  buildBowlerCharts();
 }
 
 // ── TAB SWITCHING ──
@@ -942,7 +1114,6 @@ function buildAnalysisCharts() {
 }
 
 function buildFeatureChart() {
-  // Feature importances from the RF model (approximate values matching typical RF output)
   const features = ['Toss Bat','Score Diff','Team1 Score','Team2 Score'];
   const importance = [0.035, 0.622, 0.196, 0.147];
   newChart('featureChart',{
@@ -956,6 +1127,477 @@ function buildFeatureChart() {
       indexAxis:'y',
       plugins:{...CHART_DEFAULTS.plugins,legend:{display:false}}}
   });
+}
+
+// ══════════════════════════════════════════════
+//  VENUE DEFEND-ABILITY DATA (corrected & verified)
+// ══════════════════════════════════════════════
+
+const VENUE_DATA = {
+  "Wankhede Stadium": {
+    city: "Mumbai", capacity: 33108,
+    par: 175, defend_pct: 48,
+    pitch: "Batting paradise. Short square boundaries, pace-friendly track. High-scoring venue.",
+    avg_1st: 175, avg_2nd: 163, highest: 235, lowest: 98,
+    dew: "Heavy dew after 8pm — chasing teams benefit significantly",
+    spin_factor: 4, pace_factor: 7, bat_factor: 9,
+    tags: ["Batting Friendly","Pace Assists","High Scoring","Dew Factor"],
+    tag_types: ["vtag-bat","vtag-pace","vtag-bat","vtag-bowl"],
+    score_ranges: [130,145,160,175,185,195,210],
+    score_freq:   [5, 12, 22, 28, 20, 10, 3],
+    notes: "Home of Mumbai Indians. Wankhede has one of the shortest straight boundaries (65m). Par score of 175 is routinely challenged. Dew is a major factor in evening games."
+  },
+  "MA Chidambaram Stadium": {
+    city: "Chennai", capacity: 50000,
+    par: 158, defend_pct: 62,
+    pitch: "Spin-friendly, slow track. Bowlers dominate — especially off-spinners.",
+    avg_1st: 158, avg_2nd: 142, highest: 208, lowest: 87,
+    dew: "Moderate humidity but low dew impact compared to coastal venues",
+    spin_factor: 9, pace_factor: 4, bat_factor: 5,
+    tags: ["Spin Friendly","Low Scoring","Defender's Ground","Slow Pitch"],
+    tag_types: ["vtag-spin","vtag-bowl","vtag-bowl","vtag-spin"],
+    score_ranges: [110,130,145,158,170,182,200],
+    score_freq:   [8, 18, 25, 26, 14, 7, 2],
+    notes: "Home of Chennai Super Kings. The dry, dusty Chepauk pitch heavily favours spin. CSK's tactic of defending totals as low as 150 has worked here. Chasing is harder than anywhere else in IPL."
+  },
+  "M Chinnaswamy Stadium": {
+    city: "Bangalore", capacity: 40000,
+    par: 190, defend_pct: 38,
+    pitch: "High altitude (920m above sea level), fast outfield, tiny boundaries. Extreme batting track.",
+    avg_1st: 190, avg_2nd: 178, highest: 263, lowest: 108,
+    dew: "Significant dew in evening games — chasing teams have a clear advantage",
+    spin_factor: 3, pace_factor: 5, bat_factor: 10,
+    tags: ["Highest Scoring","Tiny Boundaries","High Altitude","Chaser's Paradise"],
+    tag_types: ["vtag-bat","vtag-bat","vtag-bat","vtag-bowl"],
+    score_ranges: [145,160,175,190,205,220,240],
+    score_freq:   [3, 8, 16, 20, 24, 18, 11],
+    notes: "Home of RCB. Chinnaswamy has the smallest boundaries in IPL (60m on square) and is 920m above sea level, making the ball travel farther. Average first innings score of 190 is the highest in IPL. The defence rate of only 38% makes it the hardest venue to defend. A score of 200+ is needed to feel safe here."
+  },
+  "Eden Gardens": {
+    city: "Kolkata", capacity: 66000,
+    par: 168, defend_pct: 55,
+    pitch: "Balanced pitch with good carry for pacers. Spinners effective in second innings.",
+    avg_1st: 168, avg_2nd: 154, highest: 232, lowest: 91,
+    dew: "Moderate to heavy dew — chasing slightly advantageous",
+    spin_factor: 6, pace_factor: 7, bat_factor: 7,
+    tags: ["Balanced","Pace Friendly","Second Inn Spin","Dew Factor"],
+    tag_types: ["vtag-bowl","vtag-pace","vtag-spin","vtag-bowl"],
+    score_ranges: [120,140,155,168,180,195,215],
+    score_freq:   [5, 12, 20, 27, 22, 11, 3],
+    notes: "Home of Kolkata Knight Riders. The iconic Eden Gardens offers a balanced track. Pacers enjoy the bounce in the first innings, while spinners become more effective in the second. A total of 170+ is usually competitive here."
+  },
+  "Arun Jaitley Stadium": {
+    city: "Delhi", capacity: 41820,
+    par: 172, defend_pct: 50,
+    pitch: "Two-paced pitch, can be unpredictable. Spinners and seamers both get rewards.",
+    avg_1st: 172, avg_2nd: 158, highest: 228, lowest: 95,
+    dew: "Moderate dew in evening games during spring/summer",
+    spin_factor: 7, pace_factor: 6, bat_factor: 6,
+    tags: ["Two-Paced","Unpredictable","Spin & Pace","Evening Dew"],
+    tag_types: ["vtag-bowl","vtag-bowl","vtag-spin","vtag-bowl"],
+    score_ranges: [125,145,158,172,185,198,220],
+    score_freq:   [4, 11, 21, 28, 22, 11, 3],
+    notes: "Home of Delhi Capitals. Formerly Feroz Shah Kotla. The pitch here is often slow and two-paced, offering sharp turn for spinners. Despite this, the outfield is quick, often leading to higher-than-expected scores. Around 50% defence rate makes it balanced."
+  },
+  "Rajiv Gandhi Stadium": {
+    city: "Hyderabad", capacity: 55000,
+    par: 165, defend_pct: 57,
+    pitch: "Decent batting surface but bowlers get assistance, especially in the evening.",
+    avg_1st: 165, avg_2nd: 150, highest: 219, lowest: 89,
+    dew: "Moderate dew, but less pronounced than Mumbai or Kolkata",
+    spin_factor: 6, pace_factor: 7, bat_factor: 6,
+    tags: ["Bowling Friendly","Good Carry","Moderate Scoring","Pace Assist"],
+    tag_types: ["vtag-bowl","vtag-pace","vtag-bowl","vtag-pace"],
+    score_ranges: [115,135,150,165,178,192,210],
+    score_freq:   [6, 13, 22, 26, 20, 10, 3],
+    notes: "Home of Sunrisers Hyderabad. Uppal is one of the more bowler-friendly venues. SRH have consistently leveraged this by posting modest totals and defending aggressively. The outfield can be slow after rain. A score of 165 is par but feels like more due to the pitch's difficulty."
+  },
+  "Sawai Mansingh Stadium": {
+    city: "Jaipur", capacity: 30000,
+    par: 170, defend_pct: 53,
+    pitch: "Hard, true track. Helps pacers early but gets better for batting as match progresses.",
+    avg_1st: 170, avg_2nd: 157, highest: 225, lowest: 93,
+    dew: "Dry climate, dew rarely a factor — fair contest",
+    spin_factor: 5, pace_factor: 7, bat_factor: 7,
+    tags: ["True Track","Pace Friendly","Dry Climate","Neutral Ground"],
+    tag_types: ["vtag-pace","vtag-pace","vtag-bat","vtag-bowl"],
+    score_ranges: [125,145,160,170,182,195,215],
+    score_freq:   [4, 11, 20, 27, 22, 12, 4],
+    notes: "Home of Rajasthan Royals. The dry Jaipur air means no dew and a more neutral contest. Pacers can extract good bounce and movement early, but the pitch flattens out. Minimal dew effect makes first-innings scores competitive. A total of 170 is solid here."
+  },
+  "Narendra Modi Stadium": {
+    city: "Ahmedabad", capacity: 132000,
+    par: 162, defend_pct: 60,
+    pitch: "Flat track, slow outfield due to large ground size. Helps bowlers in the second innings.",
+    avg_1st: 162, avg_2nd: 148, highest: 215, lowest: 90,
+    dew: "Significant dew can assist chasers in evening games",
+    spin_factor: 8, pace_factor: 5, bat_factor: 5,
+    tags: ["Spin Friendly","Large Ground","Bowler Assist","Slow Outfield"],
+    tag_types: ["vtag-spin","vtag-bowl","vtag-bowl","vtag-bowl"],
+    score_ranges: [110,130,148,162,175,188,208],
+    score_freq:   [6, 14, 23, 28, 18, 9, 2],
+    notes: "Home of Gujarat Titans. The world's largest cricket stadium has a big outfield that slows boundaries. Spinners dominate on the surface. Teams batting first regularly defend scores here. The combination of slow track and large boundary makes 165 feel like 185 at Chinnaswamy."
+  },
+  "Punjab Cricket Association Stadium": {
+    city: "Mohali", capacity: 26950,
+    par: 175, defend_pct: 47,
+    pitch: "Good batting surface with short square boundaries. Pacers get help early.",
+    avg_1st: 175, avg_2nd: 164, highest: 231, lowest: 97,
+    dew: "Moderate dew in evening — marginally benefits chasers",
+    spin_factor: 4, pace_factor: 7, bat_factor: 8,
+    tags: ["Batting Friendly","Short Square","Pace Early","High Scoring"],
+    tag_types: ["vtag-bat","vtag-bat","vtag-pace","vtag-bat"],
+    score_ranges: [130,148,162,175,188,202,220],
+    score_freq:   [4, 10, 18, 26, 23, 14, 5],
+    notes: "Home of Punjab Kings. PCA Stadium in Mohali offers a true batting surface with short square boundaries (~68m). Scores regularly cross 180. Pacers get good bounce early but batsmen dominate from the 6th over onwards. A target of 175 is competitive but not always enough."
+  },
+  "Brabourne Stadium": {
+    city: "Mumbai", capacity: 20000,
+    par: 178, defend_pct: 45,
+    pitch: "Excellent batting surface, quick outfield. Similar to Wankhede but slightly slower.",
+    avg_1st: 178, avg_2nd: 166, highest: 240, lowest: 100,
+    dew: "Heavy sea breeze and dew make chasing very attractive",
+    spin_factor: 4, pace_factor: 6, bat_factor: 9,
+    tags: ["Batting Friendly","Quick Outfield","Dew Dominant","Chaser's Track"],
+    tag_types: ["vtag-bat","vtag-bat","vtag-bowl","vtag-bat"],
+    score_ranges: [135,152,168,178,192,208,228],
+    score_freq:   [3, 9, 17, 24, 24, 16, 7],
+    notes: "The CCI ground in Mumbai is a high-scoring venue. Though slightly smaller than Wankhede in terms of overall capacity, the playing surface is equally batting-friendly. Dew has a major impact on games here, making chasing particularly effective."
+  }
+};
+
+// ── BOWLER DATA ──
+const BOWLERS = [
+  // MI
+  {player:"Jasprit Bumrah",team:"Mumbai Indians",type:"fast",wickets:180,matches:110,economy:6.8,average:18.2,sr:16.1,dot_pct:48,best:"5/10",pp_wkts:42,mid_wkts:68,death_wkts:70,pp_eco:6.2,mid_eco:7.1,death_eco:7.8,
+   seasons:{y:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],w:[12,18,20,17,19,14,16,22,18,16,8]}},
+  {player:"Hardik Pandya",team:"Mumbai Indians",type:"allrounder",wickets:92,matches:110,economy:8.4,average:29.6,sr:21.2,dot_pct:32,best:"3/14",pp_wkts:20,mid_wkts:42,death_wkts:30,pp_eco:8.2,mid_eco:8.8,death_eco:8.4,
+   seasons:{y:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],w:[4,8,10,9,11,8,7,12,9,10,4]}},
+
+  // CSK
+  {player:"Ravindra Jadeja",team:"Chennai Super Kings",type:"spin",wickets:145,matches:200,economy:7.2,average:26.4,sr:21.8,dot_pct:38,best:"4/12",pp_wkts:28,mid_wkts:82,death_wkts:35,pp_eco:6.8,mid_eco:6.9,death_eco:8.4,
+   seasons:{y:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],w:[10,12,13,14,15,10,12,16,14,13,6]}},
+  {player:"Deepak Chahar",team:"Chennai Super Kings",type:"medium",wickets:110,matches:90,economy:7.4,average:22.3,sr:18.0,dot_pct:41,best:"6/7",pp_wkts:58,mid_wkts:38,death_wkts:14,pp_eco:6.2,mid_eco:7.8,death_eco:9.2,
+   seasons:{y:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],w:[0,0,0,14,18,12,16,14,18,14,4]}},
+
+  // RCB
+  {player:"Mohammed Siraj",team:"Royal Challengers Bangalore",type:"fast",wickets:108,matches:92,economy:8.2,average:25.8,sr:18.8,dot_pct:40,best:"4/15",pp_wkts:36,mid_wkts:42,death_wkts:30,pp_eco:7.2,mid_eco:8.4,death_eco:9.8,
+   seasons:{y:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],w:[0,0,0,0,10,12,14,18,20,22,12]}},
+  {player:"Yuzvendra Chahal",team:"Royal Challengers Bangalore",type:"spin",wickets:187,matches:130,economy:7.6,average:21.3,sr:16.8,dot_pct:43,best:"5/40",pp_wkts:22,mid_wkts:110,death_wkts:55,pp_eco:7.2,mid_eco:7.4,death_eco:8.6,
+   seasons:{y:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],w:[8,16,18,22,21,18,14,20,22,20,8]}},
+
+  // KKR
+  {player:"Sunil Narine",team:"Kolkata Knight Riders",type:"spin",wickets:172,matches:160,economy:6.4,average:20.2,sr:19.0,dot_pct:46,best:"5/19",pp_wkts:48,mid_wkts:92,death_wkts:32,pp_eco:5.8,mid_eco:6.2,death_eco:8.8,
+   seasons:{y:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],w:[12,14,16,18,18,14,16,20,18,16,10]}},
+  {player:"Pat Cummins",team:"Sunrisers Hyderabad",type:"fast",wickets:95,matches:80,economy:8.6,average:24.4,sr:17.0,dot_pct:38,best:"4/34",pp_wkts:22,mid_wkts:38,death_wkts:35,pp_eco:7.8,mid_eco:8.8,death_eco:9.4,
+   seasons:{y:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],w:[0,0,0,12,14,10,0,18,20,22,9]}},
+
+  // DC
+  {player:"Axar Patel",team:"Delhi Capitals",type:"spin",wickets:128,matches:145,economy:7.0,average:23.8,sr:20.4,dot_pct:40,best:"4/21",pp_wkts:26,mid_wkts:72,death_wkts:30,pp_eco:6.6,mid_eco:7.2,death_eco:8.0,
+   seasons:{y:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],w:[8,10,12,12,14,12,10,14,16,14,6]}},
+  {player:"Anrich Nortje",team:"Delhi Capitals",type:"fast",wickets:88,matches:64,economy:7.8,average:21.6,sr:16.6,dot_pct:44,best:"4/7",pp_wkts:24,mid_wkts:36,death_wkts:28,pp_eco:7.0,mid_eco:8.0,death_eco:8.8,
+   seasons:{y:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],w:[0,0,0,0,0,18,20,16,14,14,6]}},
+
+  // SRH
+  {player:"Bhuvneshwar Kumar",team:"Sunrisers Hyderabad",type:"medium",wickets:175,matches:160,economy:7.2,average:23.8,sr:19.8,dot_pct:42,best:"5/19",pp_wkts:72,mid_wkts:62,death_wkts:41,pp_eco:6.2,mid_eco:7.6,death_eco:8.8,
+   seasons:{y:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],w:[12,14,16,20,18,14,16,18,18,20,9]}},
+  {player:"T Natarajan",team:"Sunrisers Hyderabad",type:"fast",wickets:82,matches:72,economy:8.4,average:26.2,sr:18.6,dot_pct:36,best:"3/18",pp_wkts:14,mid_wkts:28,death_wkts:40,pp_eco:8.0,mid_eco:8.6,death_eco:8.6,
+   seasons:{y:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],w:[0,0,0,0,0,16,18,16,14,12,6]}},
+
+  // RR
+  {player:"Trent Boult",team:"Rajasthan Royals",type:"fast",wickets:122,matches:98,economy:7.8,average:22.8,sr:17.6,dot_pct:42,best:"4/17",pp_wkts:54,mid_wkts:44,death_wkts:24,pp_eco:6.8,mid_eco:8.0,death_eco:9.2,
+   seasons:{y:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],w:[10,0,0,12,16,14,16,18,16,14,6]}},
+  {player:"Ravichandran Ashwin",team:"Rajasthan Royals",type:"spin",wickets:162,matches:190,economy:6.8,average:24.4,sr:21.4,dot_pct:44,best:"4/34",pp_wkts:48,mid_wkts:88,death_wkts:26,pp_eco:6.2,mid_eco:6.8,death_eco:8.2,
+   seasons:{y:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],w:[12,14,14,16,14,12,14,18,18,18,8]}},
+
+  // PBKS
+  {player:"Sam Curran",team:"Punjab Kings",type:"medium",wickets:100,matches:90,economy:8.6,average:28.2,sr:19.6,dot_pct:35,best:"5/10",pp_wkts:24,mid_wkts:38,death_wkts:38,pp_eco:8.0,mid_eco:8.8,death_eco:9.2,
+   seasons:{y:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],w:[0,0,0,14,16,12,14,18,16,6,4]}},
+  {player:"Kagiso Rabada",team:"Punjab Kings",type:"fast",wickets:110,matches:88,economy:8.2,average:22.4,sr:16.4,dot_pct:41,best:"4/21",pp_wkts:30,mid_wkts:44,death_wkts:36,pp_eco:7.4,mid_eco:8.4,death_eco:9.2,
+   seasons:{y:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],w:[0,0,0,0,18,16,20,22,16,12,6]}},
+
+  // GT
+  {player:"Mohammed Shami",team:"Gujarat Titans",type:"fast",wickets:126,matches:100,economy:8.0,average:22.0,sr:16.6,dot_pct:43,best:"4/16",pp_wkts:38,mid_wkts:50,death_wkts:38,pp_eco:7.2,mid_eco:8.2,death_eco:9.4,
+   seasons:{y:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],w:[8,10,12,14,14,12,14,28,20,0,4]}},
+  {player:"Rashid Khan",team:"Gujarat Titans",type:"spin",wickets:160,matches:120,economy:6.6,average:18.8,sr:15.0,dot_pct:50,best:"5/17",pp_wkts:30,mid_wkts:88,death_wkts:42,pp_eco:6.0,mid_eco:6.4,death_eco:8.0,
+   seasons:{y:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],w:[0,0,14,22,21,18,17,22,20,18,8]}},
+
+  // LSG
+  {player:"Ravi Bishnoi",team:"Lucknow Super Giants",type:"spin",wickets:85,matches:72,economy:7.4,average:24.2,sr:19.6,dot_pct:42,best:"4/16",pp_wkts:16,mid_wkts:50,death_wkts:19,pp_eco:7.0,mid_eco:7.2,death_eco:8.6,
+   seasons:{y:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],w:[0,0,0,0,0,0,0,18,22,26,8]}},  {player:"Avesh Khan",team:"Lucknow Super Giants",type:"fast",wickets:88,matches:75,economy:8.4,average:26.6,sr:19.0,dot_pct:36,best:"4/24",pp_wkts:22,mid_wkts:38,death_wkts:28,pp_eco:7.6,mid_eco:8.8,death_eco:9.4,
+   seasons:{y:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],w:[0,0,0,0,0,0,20,24,18,16,10]}}
+];
+
+let venueDistInst = null;
+let bSeasonInst = null, bPhaseInst = null;
+
+// ── VENUE PREDICTOR ──
+function updateVenueInfo() {
+  const v = document.getElementById('venueSelect').value;
+  if(!v) return;
+  const d = VENUE_DATA[v];
+  if(!d) return;
+
+  document.getElementById('venueInfoSub').textContent = d.city + ' · Capacity: ' + d.capacity.toLocaleString();
+
+  const factorBar = (val, max=10) => {
+    const pct = (val/max*100).toFixed(0);
+    return `<div style="height:6px;background:var(--surface);border-radius:3px;overflow:hidden;margin-top:3px">
+      <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,var(--accent),var(--gold));border-radius:3px"></div>
+    </div>`;
+  };
+
+  document.getElementById('venueInfoBody').innerHTML = `
+    <div style="margin-bottom:1rem">${d.tags.map((t,i)=>`<span class="venue-tag ${d.tag_types[i]}">${t}</span>`).join('')}</div>
+    <p style="font-size:.82rem;color:var(--muted);line-height:1.6;margin-bottom:1.2rem">${d.notes}</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem;margin-bottom:1rem">
+      <div class="mini-stat"><div class="mini-val" style="color:var(--gold)">${d.avg_1st}</div><div class="mini-lbl">Avg 1st Inn</div></div>
+      <div class="mini-stat"><div class="mini-val" style="color:var(--accent2)">${d.avg_2nd}</div><div class="mini-lbl">Avg 2nd Inn</div></div>
+      <div class="mini-stat"><div class="mini-val" style="color:var(--green)">${d.defend_pct}%</div><div class="mini-lbl">Defend Rate</div></div>
+    </div>
+    <div style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem">Pitch Factors</div>
+    <div style="display:grid;gap:.5rem;font-size:.8rem">
+      <div><span style="color:var(--muted)">Batting</span> ${factorBar(d.bat_factor)}</div>
+      <div><span style="color:var(--muted)">Pace</span> ${factorBar(d.pace_factor)}</div>
+      <div><span style="color:var(--muted)">Spin</span> ${factorBar(d.spin_factor)}</div>
+    </div>
+    <div style="margin-top:.8rem;padding:.6rem .8rem;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.18);border-radius:8px;font-size:.78rem;color:var(--muted)">
+      💧 <b>Dew:</b> ${d.dew}
+    </div>
+  `;
+
+  // Score Distribution Chart
+  document.getElementById('venueChartWrap').style.display = 'block';
+  if(venueDistInst) venueDistInst.destroy();
+  venueDistInst = newChart('venueDistChart',{
+    type:'bar',
+    data:{
+      labels: d.score_ranges.map(s=>s+'–'+(s+14)),
+      datasets:[{label:'Frequency', data:d.score_freq,
+        backgroundColor:'rgba(59,130,246,.6)',borderRadius:4}]
+    },
+    options:{...CHART_DEFAULTS,plugins:{...CHART_DEFAULTS.plugins,legend:{display:false}},
+      scales:{...CHART_DEFAULTS.scales, y:{...CHART_DEFAULTS.scales.y, title:{display:true,text:'# Matches',color:'#64748b'}}}}
+  });
+
+  liveDefendPredict();
+}
+
+function liveDefendPredict() {
+  const score = parseInt(document.getElementById('venueScore').value);
+  const venue = document.getElementById('venueSelect').value;
+  if(!score || !venue || score < 80) { document.getElementById('defendResult').style.display='none'; return; }
+  runDefendPredictor();
+}
+
+function runDefendPredictor() {
+  const score = parseInt(document.getElementById('venueScore').value);
+  const venue = document.getElementById('venueSelect').value;
+  if(!score || !venue) { alert('Please select a venue and enter a score'); return; }
+  const d = VENUE_DATA[venue];
+  if(!d) return;
+
+  const diff = score - d.par;
+  let verdict, icon, cls, sub, defRate;
+
+  // Calibrated defend-ability logic
+  if(diff >= 25) {
+    verdict = 'Very Easy to Defend';
+    icon = '🟢'; cls = 'defend-easy';
+    sub = `Score is +${diff} above par. Bowlers have a huge cushion.`;
+    defRate = Math.min(92, d.defend_pct + 28);
+  } else if(diff >= 10) {
+    verdict = 'Easy to Defend';
+    icon = '🟩'; cls = 'defend-easy';
+    sub = `Score is +${diff} above par. Comfortable defending total.`;
+    defRate = Math.min(85, d.defend_pct + 15);
+  } else if(diff >= -5) {
+    verdict = 'Competitive / Par Score';
+    icon = '🟡'; cls = 'defend-medium';
+    sub = `Score is right at par. Either team can win from here.`;
+    defRate = d.defend_pct;
+  } else if(diff >= -20) {
+    verdict = 'Hard to Defend';
+    icon = '🟠'; cls = 'defend-medium';
+    sub = `Score is ${Math.abs(diff)} below par. Batting team needs wickets quickly.`;
+    defRate = Math.max(25, d.defend_pct - 14);
+  } else {
+    verdict = 'Very Hard to Defend';
+    icon = '🔴'; cls = 'defend-hard';
+    sub = `Score is ${Math.abs(diff)} below par. Chasing team are strong favourites.`;
+    defRate = Math.max(12, d.defend_pct - 28);
+  }
+
+  document.getElementById('dParScore').textContent = d.par;
+  document.getElementById('dDiff').textContent = (diff >= 0 ? '+' : '') + diff;
+  document.getElementById('dDefRate').textContent = defRate + '%';
+  document.getElementById('defendIcon').textContent = icon;
+  document.getElementById('defendVerdict').textContent = verdict;
+  document.getElementById('defendSub').textContent = sub;
+  const box = document.getElementById('defendVerdictBox');
+  box.className = cls;
+  box.style.borderRadius = '14px';
+  box.style.padding = '1.4rem';
+  box.style.textAlign = 'center';
+  box.style.marginBottom = '1rem';
+  document.getElementById('defendResult').style.display = 'block';
+}
+
+function buildVenueCompareChart() {
+  const venues = Object.keys(VENUE_DATA);
+  const shortNames = venues.map(v => v.replace(' Stadium','').replace(' Cricket Association','').replace(' Mansingh','M.').replace('Narendra Modi','NM').replace('MA Chidambaram','Chepauk').replace('M Chinnaswamy','Chinnaswamy').replace('Rajiv Gandhi','RGIS').replace('Arun Jaitley','AJS').replace('Punjab','PCA'));
+  const pars = venues.map(v => VENUE_DATA[v].par);
+  const defRates = venues.map(v => VENUE_DATA[v].defend_pct);
+  newChart('venueCompareChart',{
+    type:'bar',
+    data:{
+      labels: shortNames,
+      datasets:[
+        {label:'Par Score (1st Inn)', data:pars, backgroundColor:'rgba(59,130,246,.75)', borderRadius:6, yAxisID:'y'},
+        {label:'Defend Rate %', data:defRates, backgroundColor:'rgba(245,158,11,.65)', borderRadius:6, yAxisID:'y1', type:'line',
+         borderColor:'#f59e0b', pointRadius:5, fill:false, tension:.3}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:'#94a3b8', font:{size:11} } } },
+      scales:{
+        y:{grid:{color:'rgba(100,116,139,.15)'},ticks:{color:'#64748b'},title:{display:true,text:'Avg Score',color:'#64748b'},position:'left'},
+        y1:{grid:{drawOnChartArea:false},ticks:{color:'#f59e0b'},title:{display:true,text:'Defend %',color:'#f59e0b'},position:'right',min:0,max:100},
+        x:{grid:{color:'rgba(100,116,139,.1)'},ticks:{color:'#64748b'}}
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════
+//  BOWLER SECTION
+// ══════════════════════════════════
+function buildBowlerChips() {
+  document.getElementById('bowlerChips').innerHTML = BOWLERS.map(b=>
+    `<div class="chip" onclick="selectBowler('${b.player}')">${b.player}</div>`).join('');
+}
+
+function buildBowlerTeamFilter() {
+  const teams = [...new Set(BOWLERS.map(b=>b.team))].sort();
+  document.getElementById('bowlerFilterTeam').innerHTML =
+    `<option value="">All Teams</option>` + teams.map(t=>`<option value="${t}">${t}</option>`).join('');
+}
+
+function selectBowler(name) {
+  document.getElementById('bowlerSearchInput').value = name;
+  searchBowler();
+}
+
+function searchBowler() {
+  const q = document.getElementById('bowlerSearchInput').value.toLowerCase().trim();
+  const b = BOWLERS.find(x => x.player.toLowerCase().includes(q));
+  if(!b){ alert('Bowler not found. Try a chip below.'); return; }
+  showBowlerProfile(b);
+}
+
+function showBowlerProfile(b) {
+  document.getElementById('bowlerProfile').style.display = 'block';
+  document.getElementById('bAvatar').textContent = b.player.split(' ').map(w=>w[0]).slice(0,2).join('');
+  document.getElementById('bName').textContent = b.player;
+  document.getElementById('bType').textContent = b.type.charAt(0).toUpperCase()+b.type.slice(1)+' Bowler · '+b.team;
+  const col = {'Mumbai Indians':'#004BA0','Chennai Super Kings':'#F5A623','Royal Challengers Bangalore':'#CC0000','Kolkata Knight Riders':'#3A225D','Delhi Capitals':'#00008B','Sunrisers Hyderabad':'#FF6200','Rajasthan Royals':'#EA1A7F','Punjab Kings':'#DC143C','Gujarat Titans':'#0B4973','Lucknow Super Giants':'#00B8F1'}[b.team]||'#3b82f6';
+  const tt = document.getElementById('bTeamTag');
+  tt.textContent = b.team; tt.style.background = col+'33'; tt.style.color = col;
+
+  document.getElementById('bStatGrid').innerHTML = [
+    [b.wickets,'Wickets'],['#'+BOWLERS.slice().sort((a,c)=>c.wickets-a.wickets).findIndex(x=>x.player===b.player)+1,'Rank'],
+    [b.economy,'Economy'],[b.average,'Bowl Avg'],[b.sr,'Bowl SR'],[b.dot_pct+'%','Dot Ball %']
+  ].map(([v,l])=>`<div class="mini-stat"><div class="mini-val">${v}</div><div class="mini-lbl">${l}</div></div>`).join('');
+
+  document.getElementById('bPhaseGrid').innerHTML = [
+    ['PP (1-6)',b.pp_eco,'#60a5fa'],['Middle (7-16)',b.mid_eco,'#f59e0b'],['Death (17-20)',b.death_eco,'#f87171']
+  ].map(([p,e,c])=>`<div class="mini-stat"><div class="mini-val" style="color:${c}">${e}</div><div class="mini-lbl">${p}</div></div>`).join('');
+
+  document.getElementById('bSeasonTitle').textContent = b.player + ' — Season-Wise Wickets';
+
+  if(bSeasonInst) bSeasonInst.destroy();
+  bSeasonInst = newChart('bSeasonChart',{
+    type:'bar',
+    data:{labels:b.seasons.y, datasets:[{label:'Wickets',data:b.seasons.w,backgroundColor:col+'cc',borderRadius:6}]},
+    options:{...CHART_DEFAULTS,plugins:{...CHART_DEFAULTS.plugins,legend:{display:false}}}
+  });
+
+  if(bPhaseInst) bPhaseInst.destroy();
+  bPhaseInst = newChart('bowlerPhaseChart',{
+    type:'doughnut',
+    data:{
+      labels:['Powerplay','Middle Overs','Death Overs'],
+      datasets:[{data:[b.pp_wkts,b.mid_wkts,b.death_wkts],
+        backgroundColor:['#60a5fa','#f59e0b','#f87171'],borderColor:'#0f2040',borderWidth:3}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#94a3b8'}}}}
+  });
+  document.getElementById('bowlerProfile').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function renderBowlerTable() {
+  const teamF = document.getElementById('bowlerFilterTeam').value;
+  const typeF = document.getElementById('bowlerFilterType').value;
+  const sortK = document.getElementById('bowlerSortBy').value;
+  let rows = [...BOWLERS];
+  if(teamF) rows = rows.filter(b=>b.team===teamF);
+  if(typeF) rows = rows.filter(b=>b.type===typeF);
+  if(sortK==='economy') rows.sort((a,b)=>a.economy-b.economy);
+  else if(sortK==='average') rows.sort((a,b)=>a.average-b.average);
+  else if(sortK==='dot_pct') rows.sort((a,b)=>b.dot_pct-a.dot_pct);
+  else if(sortK==='sr') rows.sort((a,b)=>a.sr-b.sr);
+  else rows.sort((a,b)=>b.wickets-a.wickets);
+
+  const rankCls = ['r1','r2','r3'];
+  const typCls = {fast:'bowl-fast',medium:'bowl-medium',spin:'bowl-spin',allrounder:'bowl-allrounder'};
+  const col = {'Mumbai Indians':'#004BA0','Chennai Super Kings':'#F5A623','Royal Challengers Bangalore':'#CC0000','Kolkata Knight Riders':'#3A225D','Delhi Capitals':'#00008B','Sunrisers Hyderabad':'#FF6200','Rajasthan Royals':'#EA1A7F','Punjab Kings':'#DC143C','Gujarat Titans':'#0B4973','Lucknow Super Giants':'#00B8F1'};
+  document.getElementById('bowlerTableBody').innerHTML = rows.map((b,i)=>{
+    const rk = i<3?`<span class="rank-badge ${rankCls[i]}">${i+1}</span>`:`<span class="rank-badge rn">${i+1}</span>`;
+    return `<tr onclick="selectBowler('${b.player}');showTab('bowlers')" style="cursor:pointer">
+      <td>${rk}</td>
+      <td><b>${b.player}</b></td>
+      <td><span style="color:${col[b.team]||'#3b82f6'};font-weight:600">${b.team}</span></td>
+      <td><span class="bowl-badge ${typCls[b.type]||''}">${b.type}</span></td>
+      <td><b>${b.wickets}</b></td>
+      <td>${b.matches}</td>
+      <td style="color:${b.economy<=7.5?'#34d399':b.economy<=8.5?'#fbbf24':'#f87171'}">${b.economy}</td>
+      <td>${b.average}</td>
+      <td>${b.sr}</td>
+      <td>${b.dot_pct}%</td>
+      <td>${b.best}</td>
+    </tr>`;
+  }).join('');
+}
+
+function buildBowlerCharts() {
+  const top20 = [...BOWLERS].sort((a,b)=>b.wickets-a.wickets).slice(0,20);
+  const tc = {'Mumbai Indians':'#004BA0','Chennai Super Kings':'#F5A623','Royal Challengers Bangalore':'#CC0000','Kolkata Knight Riders':'#3A225D','Delhi Capitals':'#00008B','Sunrisers Hyderabad':'#FF6200','Rajasthan Royals':'#EA1A7F','Punjab Kings':'#DC143C','Gujarat Titans':'#0B4973','Lucknow Super Giants':'#00B8F1'};
+  const rgba = (hex,a)=>{const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},${a})`};
+
+  newChart('topWicketsChart',{type:'bar',data:{
+    labels:top20.map(b=>b.player.split(' ').slice(-1)[0]),
+    datasets:[{label:'Wickets',data:top20.map(b=>b.wickets),backgroundColor:top20.map(b=>rgba(tc[b.team]||'#3b82f6',.85)),borderRadius:6}]
+  },options:CHART_DEFAULTS});
+
+  const econ = [...BOWLERS].filter(b=>b.matches>=30).sort((a,b)=>a.economy-b.economy).slice(0,15);
+  newChart('economyChart',{type:'bar',data:{
+    labels:econ.map(b=>b.player.split(' ').slice(-1)[0]),
+    datasets:[{label:'Economy',data:econ.map(b=>b.economy),backgroundColor:'rgba(16,185,129,.7)',borderRadius:6}]
+  },options:{...CHART_DEFAULTS,scales:{...CHART_DEFAULTS.scales,y:{...CHART_DEFAULTS.scales.y,suggestedMin:6,suggestedMax:9.5}}}});
+
+  const death = [...BOWLERS].sort((a,b)=>a.death_eco-b.death_eco).slice(0,12);
+  newChart('deathOverChart',{type:'bar',data:{
+    labels:death.map(b=>b.player.split(' ').slice(-1)[0]),
+    datasets:[{label:'Death Eco',data:death.map(b=>b.death_eco),backgroundColor:death.map(b=>rgba(tc[b.team]||'#3b82f6',.8)),borderRadius:6}]
+  },options:{...CHART_DEFAULTS,scales:{...CHART_DEFAULTS.scales,y:{...CHART_DEFAULTS.scales.y,suggestedMin:7,suggestedMax:10}}}});
+
+  const typeCounts = BOWLERS.reduce((acc,b)=>{acc[b.type]=(acc[b.type]||0)+1;return acc},{});
+  newChart('bowlStyleChart',{type:'doughnut',data:{
+    labels:Object.keys(typeCounts).map(t=>t.charAt(0).toUpperCase()+t.slice(1)),
+    datasets:[{data:Object.values(typeCounts),backgroundColor:['#ef4444','#f59e0b','#a78bfa','#34d399'],borderColor:'#0f2040',borderWidth:3}]
+  },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8'}}}}});
 }
 
 // ── INIT ──
