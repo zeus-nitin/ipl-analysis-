@@ -522,7 +522,7 @@ const ZONE_COLS   = ["zone_straight","zone_cover","zone_midwicket","zone_fine_le
 
 async function loadData() {
   try {
-    const res = await fetch('charts/dashboard_data.json');
+    const res = await fetch('dashboard_data.json');
     D = await res.json();
     init();
   } catch(e) {

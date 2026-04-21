@@ -68,7 +68,7 @@ PLAYERS = {
     "Devon Conway":        {"team": "Chennai Super Kings",         "style": "opener",       "base_sr": 132, "base_avg": 37},
 
     # ── Royal Challengers Bangalore ──
-    "Virat Kohli":         {"team": "Royal Challengers Bangalore", "style": "top-order",    "base_sr": 140, "base_avg": 42},
+    "Virat Kohli":         {"team": "Royal Challengers Bangalore", "style": "top-order",    "base_sr": 133, "base_avg": 40},
     "AB de Villiers":      {"team": "Royal Challengers Bangalore", "style": "finisher",     "base_sr": 158, "base_avg": 44},
     "Faf du Plessis":      {"team": "Royal Challengers Bangalore", "style": "opener",       "base_sr": 136, "base_avg": 38},
     "Glenn Maxwell":       {"team": "Royal Challengers Bangalore", "style": "power-hitter", "base_sr": 162, "base_avg": 29},
@@ -176,9 +176,47 @@ def generate_players(matches_df):
         "power-hitter": [65, 75, 90, 80, 45, 82, 50, 85],
         "tail":         [45, 55, 55, 48, 40, 50, 42, 52],
     }
+    # Real season-by-season stats for Virat Kohli (official IPL records 2015-2025)
+    # Format: season -> (matches, runs, strike_rate, average)
+    KOHLI_REAL_STATS = {
+        2015: (16,  505, 130.82, 45.90),
+        2016: (16,  973, 152.03, 81.08),
+        2017: (10,  308, 122.22, 30.80),
+        2018: (14,  530, 139.10, 48.18),
+        2019: (14,  464, 141.46, 33.14),
+        2020: (15,  466, 121.35, 42.36),
+        2021: (15,  405, 119.46, 28.92),
+        2022: (16,  341, 115.99, 22.73),
+        2023: (14,  639, 139.82, 53.25),
+        2024: (15,  741, 154.69, 61.75),
+        2025: (15,  657, 144.71, 54.75),
+    }
+
     records = []
     for season in SEASONS:
         for player, info in PLAYERS.items():
+            # ── Use real data for Virat Kohli ──
+            if player == "Virat Kohli" and season in KOHLI_REAL_STATS:
+                m, r, sr, avg = KOHLI_REAL_STATS[season]
+                balls = max(5, int(r / (sr / 100)))
+                fours = int(r * 0.085)
+                sixes = int(r * 0.033)
+                base_zones = zone_biases[info["style"]]
+                zone_scores = [max(10, min(100, int(z + np.random.normal(0, 12)))) for z in base_zones]
+                records.append({
+                    "season": season, "player": player, "team": info["team"],
+                    "matches": m, "runs": r, "balls_faced": balls,
+                    "fours": fours, "sixes": sixes,
+                    "average": round(avg, 2),
+                    "strike_rate": round(sr, 2),
+                    "style": info["style"],
+                    "zone_straight": zone_scores[0], "zone_cover": zone_scores[1],
+                    "zone_midwicket": zone_scores[2], "zone_fine_leg": zone_scores[3],
+                    "zone_third_man": zone_scores[4], "zone_sq_leg": zone_scores[5],
+                    "zone_point": zone_scores[6], "zone_long_on": zone_scores[7]
+                })
+                continue
+
             if season == 2025:
                 matches = np.random.randint(5, 10)
             else:
@@ -1475,7 +1513,7 @@ def generate_gui_dashboard(data_json, ml_accuracy):
     data_json["ml_accuracy"] = round(ml_accuracy * 100, 2)
     with open("charts/dashboard_data.json", "w") as f:
         json.dump(data_json, f, indent=2)
-    with open("IPL_Dashboard_GUI.html", "r", encoding="utf-8") as template_file:
+    with open("IPL_Dashboard.html", "r", encoding="utf-8") as template_file:
         html_content = template_file.read()
     with open("charts/index.html", "w", encoding="utf-8") as f:
         f.write(html_content)
